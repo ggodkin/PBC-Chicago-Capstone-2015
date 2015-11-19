@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<jmeterTestPlan version="1.2" properties="2.8" jmeter="2.13.1 r1">
+<jmeterTestPlan version="1.2" properties="2.8" jmeter="2.13.2 r1">
   <hashTree>
     <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="Test Plan" enabled="true">
       <stringProp name="TestPlan.comments"></stringProp>
@@ -21,7 +21,7 @@
         <stringProp name="username"></stringProp>
       </CassandraConnection>
       <hashTree/>
-      <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree" enabled="false">
+      <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree" enabled="true">
         <boolProp name="ResultCollector.error_logging">false</boolProp>
         <objProp>
           <name>saveConfig</name>
@@ -87,6 +87,14 @@
         <stringProp name="filename"></stringProp>
       </ResultCollector>
       <hashTree/>
+      <BeanShellPreProcessor guiclass="TestBeanGUI" testclass="BeanShellPreProcessor" testname="BeanShell PreProcessor" enabled="true">
+        <stringProp name="filename"></stringProp>
+        <stringProp name="parameters"></stringProp>
+        <boolProp name="resetInterpreter">false</boolProp>
+        <stringProp name="script">String[] customers = new String[4001];
+String[] zipcodes = new String[4001];</stringProp>
+      </BeanShellPreProcessor>
+      <hashTree/>
       <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Scanner Thread Group" enabled="true">
         <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
         <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
@@ -127,6 +135,15 @@
           <stringProp name="LoopController.loops">${__Random(200, 1000)}</stringProp>
         </LoopController>
         <hashTree>
+          <RandomVariableConfig guiclass="TestBeanGUI" testclass="RandomVariableConfig" testname="Random Customer" enabled="true">
+            <stringProp name="variableName">CUSTOMER_INDEX</stringProp>
+            <stringProp name="outputFormat"></stringProp>
+            <stringProp name="minimumValue">1</stringProp>
+            <stringProp name="maximumValue">4000</stringProp>
+            <stringProp name="randomSeed">${__Random(200, 1000)}</stringProp>
+            <boolProp name="perThread">true</boolProp>
+          </RandomVariableConfig>
+          <hashTree/>
           <RandomVariableConfig guiclass="TestBeanGUI" testclass="RandomVariableConfig" testname="Random Register" enabled="true">
             <stringProp name="variableName">register_id</stringProp>
             <stringProp name="outputFormat"></stringProp>
@@ -204,7 +221,7 @@
                 <stringProp name="410330749">receipt_total</stringProp>
               </collectionProp>
               <collectionProp name="UserParameters.thread_values">
-                <collectionProp name="111828440">
+                <collectionProp name="1343704872">
                   <stringProp name="-731381727">${__Random(1,6)}</stringProp>
                   <stringProp name="-1497224810">${__Random(0,14)}9.99</stringProp>
                   <stringProp name="1273565563">${__jexl(${price}*${qty}+${receipt_total})}</stringProp>
@@ -293,11 +310,48 @@
               <hashTree/>
             </hashTree>
           </hashTree>
+          <LoopController guiclass="LoopControlPanel" testclass="LoopController" testname="Populate ZIP Code" enabled="true">
+            <boolProp name="LoopController.continue_forever">true</boolProp>
+            <stringProp name="LoopController.loops">${__jexl(${CUSTOMER_INDEX}*13)}</stringProp>
+          </LoopController>
+          <hashTree>
+            <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="CSV ZIP Codes" enabled="true">
+              <stringProp name="filename">../csv/zipcodes.csv</stringProp>
+              <stringProp name="fileEncoding"></stringProp>
+              <stringProp name="variableNames">Z_CODE,Z_CITY,Z_STATE,Z_LAT,Z_LON,Z_FIELD1,Z_FIELD2</stringProp>
+              <stringProp name="delimiter">|</stringProp>
+              <boolProp name="quotedData">false</boolProp>
+              <boolProp name="recycle">true</boolProp>
+              <boolProp name="stopThread">false</boolProp>
+              <stringProp name="shareMode">shareMode.all</stringProp>
+            </CSVDataSet>
+            <hashTree/>
+          </hashTree>
+          <LoopController guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Populate Customers" enabled="true">
+            <boolProp name="LoopController.continue_forever">true</boolProp>
+            <stringProp name="LoopController.loops">${CUSTOMER_INDEX}</stringProp>
+          </LoopController>
+          <hashTree>
+            <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="CSV Customers" enabled="true">
+              <stringProp name="filename">../csv/4000names.csv</stringProp>
+              <stringProp name="fileEncoding"></stringProp>
+              <stringProp name="variableNames">CUSTOMER</stringProp>
+              <stringProp name="delimiter">|</stringProp>
+              <boolProp name="quotedData">false</boolProp>
+              <boolProp name="recycle">true</boolProp>
+              <boolProp name="stopThread">false</boolProp>
+              <stringProp name="shareMode">shareMode.all</stringProp>
+            </CSVDataSet>
+            <hashTree/>
+          </hashTree>
           <CassandraSampler guiclass="TestBeanGUI" testclass="CassandraSampler" testname="Insert Receipt" enabled="true">
             <stringProp name="batchSize"></stringProp>
             <stringProp name="consistencyLevel">LOCAL_ONE</stringProp>
-            <stringProp name="query">insert into receipts (credit_card_type, credit_card_number, receipt_timestamp, store_id, register_id, receipt_id, receipt_total) values (?,?,?,?,?,?,?)</stringProp>
-            <stringProp name="queryArguments">${credit_card_type},${credit_card_number},${receipt_date} ${receipt_time}-0700,${store_id},${register_id},${receipt_id},${receipt_total}</stringProp>
+            <stringProp name="query">begin unlogged batch
+insert into receipts (credit_card_type, credit_card_number, receipt_timestamp, store_id, register_id, receipt_id, receipt_total) values (?,?,?,?,?,?,?)
+insert into receipts_by_customer (customer_name, receipt_id, zipcode) values (?,?,?)
+apply batch</stringProp>
+            <stringProp name="queryArguments">${credit_card_type},${credit_card_number},${receipt_date} ${receipt_time}-0700,${store_id},${register_id},${receipt_id},${receipt_total},${CUSTOMER},${receipt_id},${Z_CODE}</stringProp>
             <stringProp name="queryType">Prepared Statement</stringProp>
             <stringProp name="resultVariable"></stringProp>
             <stringProp name="sessionName">cc</stringProp>
