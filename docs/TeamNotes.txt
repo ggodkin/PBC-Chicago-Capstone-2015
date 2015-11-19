@@ -28,3 +28,24 @@ csc.setKeyspace("retail")
 val joinDf = csc.sql("select rc.credit_card_number, rs.state from retail.stores as rs join  retail.receipts_by_credit_card as rc on  rs.store_id =  rc.store_id group by rc.credit_card_number, rs.state ").registerTempTable("cc_by_state")
 
 csc.sql("select s1. credit_card_number as credit_card_number, s1.state as state, s2.state as susp_state from cc_by_state as s1 join cc_by_state as s2 on s1.credit_card_number = s2.credit_card_number and s1.state > s2.state").write.format("org.apache.spark.sql.cassandra").options(Map("keyspace" -> "retail", "table" -> "fraud_activities")).save();
+
+
+CREATE TABLE retail.receipts_by_customer (
+    customer_name text,
+    receipt_id bigint,
+    zipcode text,
+    PRIMARY KEY (customer_name, receipt_id)
+) WITH CLUSTERING ORDER BY (receipt_id ASC)
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = '{"keys":"ALL", "rows_per_partition":"NONE"}'
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy'}
+    AND compression = {'sstable_compression': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND dclocal_read_repair_chance = 0.1
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair_chance = 0.0
+    AND speculative_retry = '99.0PERCENTILE';
