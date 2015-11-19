@@ -1,0 +1,38 @@
+{% extends "/base.jinja2" %}
+
+{% block head %}
+{% endblock %}
+
+{% block body %}
+    SOLR Search:<br>
+    <div id="search_div">
+    <form action="/web/searchbyreceipts">
+
+      <br>
+      Product Name: <input type="text" name="product_name"> <br>
+      <input type="submit" value="Search">
+    </form>
+    </div>
+    <div id="list_div">
+        <br>
+        <table border="1">
+        <th>Product Name</th>
+        <th>Quantity</th>
+        <th>Unit Price</th>
+        <th>Total</th>
+        {% if products %}
+            {% for product in products %}
+                <tr>
+                <td>{{product.product_name}}</td>
+                <td>{{product.quantity}}</td>
+                <td>{{product.unit_price}}</td>
+                <td>{{product.total}}</td>
+                </tr>
+            {% endfor %}
+        {% endif %}
+        </table>
+</div>
+{% endblock %}
+
+{% block tail %}
+{% endblock %}

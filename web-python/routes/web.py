@@ -130,6 +130,30 @@ def search():
                            products = results,
                            filter_by = filter_by)
 
+@web_api.route('/searchbyreceipts')
+def searchreceipts():
+    # this will search the city field in the zipcodes solr core
+    # the import parameter is 's'
+
+    search_term = request.args.get('product_name')
+
+    if not search_term:
+        return render_template('searchreceipt.jinja2',
+                               products = None)
+
+    # parameters to solr are rows=300  wt (writer type)=json, and q=city:<keyword> sort=zipcode asc
+    # note: escape quote any quotes that are part of the query / filter query
+    solr_query = '"q":"product_name:%s"' % search_term.replace('"','\\"').encode('utf-8')
+
+    query = "SELECT * FROM receipts WHERE solr_query = '{%s}' LIMIT 300" % solr_query
+
+    # get the response
+    results = cassandra_helper.session.execute(query)
+    return render_template('searchreceipt.jinja2', products = results)
+
+
+
+
 #
 # The facets come in a list [ 'value1', 10, 'value2' 5, ...] with numbers in descending order
 # We convert it to a list of [('value1',10), ('value2',5) ... ]
