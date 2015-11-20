@@ -1,4 +1,7 @@
+
  dsetool create_core retail.receipts generateResources=true reindex=true
+
+
 
 
 CREATE TABLE retail.fraud_activities (
