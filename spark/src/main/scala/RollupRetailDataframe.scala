@@ -63,8 +63,10 @@ object RollupRetailDataframe {
       .save()
 
     csc.setKeyspace("retail")
+
     csc.sql("select rc.credit_card_number, rs.state from retail.stores as rs join  retail.receipts_by_credit_card as rc on  rs.store_id =  rc.store_id group by rc.credit_card_number, rs.state ")
       .registerTempTable("cc_by_state")
+
     val fraudDf = csc.sql("select s1. credit_card_number as credit_card_number, s1.state as state, s2.state as susp_state from cc_by_state as s1 join cc_by_state as s2 on s1.credit_card_number = s2.credit_card_number and s1.state > s2.state")
 
     fraudDf.write
