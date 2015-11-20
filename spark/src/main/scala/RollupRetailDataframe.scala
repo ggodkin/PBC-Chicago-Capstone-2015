@@ -2,6 +2,8 @@ import org.apache.spark.sql.{SaveMode, SQLContext}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.sql.cassandra.CassandraSQLContext
+
 
 object RollupRetailDataframe {
 
@@ -14,7 +16,7 @@ object RollupRetailDataframe {
 
     val sc = new SparkContext(conf)
     val sqlContext = new SQLContext(sc)
-
+    val csc = new CassandraSQLContext(sc)
 
     // Nice handy dandy function.  It picks up the current value of SQLContext at execution
     // so it's breaks encapsulation
@@ -57,6 +59,17 @@ object RollupRetailDataframe {
       .format("org.apache.spark.sql.cassandra")
       .options(Map("keyspace" -> "retail",
       "table" -> "sales_by_date"))
+      .mode(SaveMode.Overwrite)
+      .save()
+
+    csc.setKeyspace("retail")
+    csc.sql("select rc.credit_card_number, rs.state from retail.stores as rs join  retail.receipts_by_credit_card as rc on  rs.store_id =  rc.store_id group by rc.credit_card_number, rs.state ")
+      .registerTempTable("cc_by_state")
+    val fraudDf = csc.sql("select s1. credit_card_number as credit_card_number, s1.state as state, s2.state as susp_state from cc_by_state as s1 join cc_by_state as s2 on s1.credit_card_number = s2.credit_card_number and s1.state > s2.state")
+
+    fraudDf.write
+      .format("org.apache.spark.sql.cassandra")
+      .options(Map("keyspace" -> "retail", "table" -> "fraud_activities"))
       .mode(SaveMode.Overwrite)
       .save()
 
