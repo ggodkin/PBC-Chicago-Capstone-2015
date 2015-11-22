@@ -143,7 +143,7 @@ def searchreceipts():
 
     # parameters to solr are rows=300  wt (writer type)=json, and q=city:<keyword> sort=zipcode asc
     # note: escape quote any quotes that are part of the query / filter query
-    solr_query = '"q":"product_name:%s"' % search_term.replace('"','\\"').encode('utf-8')
+    solr_query = '"q":"product_name:%s"' % search_term.replace('"','\\"').replace(" ", "+").encode('utf-8')
 
     query = "SELECT * FROM receipts WHERE solr_query = '{%s}' LIMIT 300" % solr_query
 
